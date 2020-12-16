@@ -79,6 +79,16 @@ def is_alb_event(event):
     return event.get("requestContext", {}).get("elb")
 
 
+def get_request_path(event):
+    if u"path" in event:
+        return event[u"path"]
+    elif u"rawPath" in event:
+        return event[u"rawPath"]
+    elif u"requestPath" in event:
+        return event[u"requestPath"]
+    return ""
+
+
 def encode_query_string(event):
     params = event.get(u"multiValueQueryStringParameters")
     if not params:
@@ -180,7 +190,7 @@ def handle_payload_v1(app, event, context):
     # If a user is using a custom domain on API Gateway, they may have a base
     # path in their URL. This allows us to strip it out via an optional
     # environment variable.
-    path_info = event[u"path"]
+    path_info = get_request_path(event)
     base_path = os.environ.get("API_GATEWAY_BASE_PATH")
     if base_path:
         script_name = "/" + base_path
@@ -242,7 +252,7 @@ def handle_payload_v2(app, event, context):
 
     script_name = get_script_name(headers, event.get("requestContext", {}))
 
-    path_info = event[u"rawPath"]
+    path_info = get_request_path(event)
 
     body = event.get("body", "")
     body = get_body_bytes(event, body)
